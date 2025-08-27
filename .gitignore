@@ -178,4 +178,6 @@ eval_results/
 results/
 
 .vscode/
-.python-version
+.python-version/
+recipes/
+ckpt
