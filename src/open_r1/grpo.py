@@ -15,6 +15,7 @@
 import logging
 import os
 import sys
+from datetime import datetime
 
 import datasets
 import transformers
@@ -50,6 +51,39 @@ def main(script_args, training_args, model_args):
     transformers.utils.logging.set_verbosity(log_level)
     transformers.utils.logging.enable_default_handler()
     transformers.utils.logging.enable_explicit_format()
+
+    # Save the model with the reward info v1
+    # reward_info = "".join(
+    #     f"{int(w)}{name}"
+    #     for name, w in zip(script_args.reward_funcs, training_args.reward_weights)
+    # )
+
+    # Save the model with the reward info v2
+    reward_order = ["accuracy", "format", "length"]
+    reward_dict = dict(zip(script_args.reward_funcs, training_args.reward_weights))
+    reward_info = "".join(str(int(reward_dict.get(name, 0))) for name in reward_order)
+
+    # Learning rate exp
+    current_time = datetime.now()
+    formatted_datetime = current_time.strftime("%Y_%m_%d_%H_%M_%S")
+    # training_args.run_name = f"{model_args.model_name_or_path}_{script_args.dataset_name}_{reward_info}_{training_args.learning_rate}_{formatted_datetime}"
+    training_args.run_name = f"{reward_info}"
+    training_args.output_dir = os.path.join(
+        training_args.output_dir, f"{training_args.run_name}"
+    )
+
+    # # reward ratio exp
+    # current_time = datetime.now()
+    # formatted_datetime = current_time.strftime("%Y_%m_%d_%H_%M_%S")
+    # training_args.run_name = f"ds7b_userprompt2"
+    # training_args.output_dir = os.path.join(
+    #     training_args.output_dir, f"{training_args.run_name}"
+    # )
+
+    # Normalize the reward weights
+    training_args.reward_weights = [
+        w / sum(training_args.reward_weights) for w in training_args.reward_weights
+    ]
 
     # Log on each process a small summary
     logger.warning(
@@ -88,14 +122,18 @@ def main(script_args, training_args, model_args):
     reward_funcs = get_reward_funcs(script_args)
 
     # Format into conversation
-    def make_conversation(example, prompt_column: str = script_args.dataset_prompt_column):
+    def make_conversation(
+        example, prompt_column: str = script_args.dataset_prompt_column
+    ):
         prompt = []
 
         if training_args.system_prompt is not None:
             prompt.append({"role": "system", "content": training_args.system_prompt})
 
         if prompt_column not in example:
-            raise ValueError(f"Dataset Question Field Error: {prompt_column} is not supported.")
+            raise ValueError(
+                f"Dataset Question Field Error: {prompt_column} is not supported."
+            )
 
         prompt.append({"role": "user", "content": example[prompt_column]})
         return {"prompt": prompt}
@@ -105,6 +143,29 @@ def main(script_args, training_args, model_args):
     for split in dataset:
         if "messages" in dataset[split].column_names:
             dataset[split] = dataset[split].remove_columns("messages")
+        if (
+            "answer" in dataset[split].column_names
+            and "solution" not in dataset[split].column_names
+        ):
+            dataset[split] = dataset[split].rename_column("answer", "solution")
+        if (
+            "answer" in dataset[split].column_names
+            and "solution" in dataset[split].column_names
+        ):
+            dataset[split] = dataset[split].filter(
+                lambda x: x["answer"] is not None and str(x["answer"]).strip() != ""
+            )
+            dataset[split] = dataset[split].remove_columns("solution")
+            dataset[split] = dataset[split].rename_column("answer", "solution")
+
+            def add_latex_dollars(example):
+                solution = example["solution"]
+                # 避免重复添加 $$，这里只在两端都不包含时才加
+                if not solution.strip().startswith("$$"):
+                    solution = "$$" + solution.strip() + "$$"
+                return {"solution": solution}
+
+            dataset[split] = dataset[split].map(add_latex_dollars)
 
     #############################
     # Initialize the GRPO trainer
@@ -114,7 +175,11 @@ def main(script_args, training_args, model_args):
         reward_funcs=reward_funcs,
         args=training_args,
         train_dataset=dataset[script_args.dataset_train_split],
-        eval_dataset=(dataset[script_args.dataset_test_split] if training_args.eval_strategy != "no" else None),
+        eval_dataset=(
+            dataset[script_args.dataset_test_split]
+            if training_args.eval_strategy != "no"
+            else None
+        ),
         peft_config=get_peft_config(model_args),
         callbacks=get_callbacks(training_args, model_args),
         processing_class=tokenizer,
@@ -130,6 +195,7 @@ def main(script_args, training_args, model_args):
     elif last_checkpoint is not None:
         checkpoint = last_checkpoint
     train_result = trainer.train(resume_from_checkpoint=checkpoint)
+    # train_result = trainer.train()
     metrics = train_result.metrics
     metrics["train_samples"] = len(dataset[script_args.dataset_train_split])
     trainer.log_metrics("train", metrics)

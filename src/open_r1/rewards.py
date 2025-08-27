@@ -81,13 +81,33 @@ def accuracy_reward(completions: list[list[dict[str, str]]], solution: list[str]
 
     return rewards
 
+# def format_reward(completions, **kwargs):
+#     """Reward function that checks if the reasoning process is enclosed within <think> and </think> tags, while the final answer is enclosed within <answer> and </answer> tags."""
+#     pattern = r"^<think>\n.*?\n</think>\n"
+#     completion_contents = [completion[0]["content"] for completion in completions]
+#     matches = [re.match(pattern, content, re.DOTALL | re.MULTILINE) for content in completion_contents]
+#     return [1.0 if match else 0.0 for match in matches]
 
+# def format_reward(completions, **kwargs):
+#     """Reward function that checks if the reasoning process is enclosed within <think> and </think> tags, while the final answer is enclosed within <answer> and </answer> tags."""
+#     pattern = r"^<think>\n.*?\n</think>\n<answer>\n.*?\n</answer>$"
+#     completion_contents = [completion[0]["content"] for completion in completions]
+#     matches = [re.match(pattern, content, re.DOTALL | re.MULTILINE) for content in completion_contents]
+#     return [1.0 if match else 0.0 for match in matches]
+
+# for deepseek r1 model, we only count </think> tag, because <think> tag is prefilled in chat template
 def format_reward(completions, **kwargs):
     """Reward function that checks if the reasoning process is enclosed within <think> and </think> tags, while the final answer is enclosed within <answer> and </answer> tags."""
-    pattern = r"^<think>\n.*?\n</think>\n<answer>\n.*?\n</answer>$"
-    completion_contents = [completion[0]["content"] for completion in completions]
-    matches = [re.match(pattern, content, re.DOTALL | re.MULTILINE) for content in completion_contents]
-    return [1.0 if match else 0.0 for match in matches]
+
+    def count_tags(text: str) -> float:
+        count = 0.0
+        # We only count </think> tag, because <think> tag is available in system prompt
+        if text.count("\n</think>\n") == 1:
+            count += 1.0
+        return count
+
+    contents = [completion[0]["content"] for completion in completions]
+    return [count_tags(c) for c in contents]
 
 
 def tag_count_reward(completions, **kwargs) -> list[float]:
@@ -151,7 +171,7 @@ def len_reward(completions: list[Dict[str, str]], solution: list[str], **kwargs)
         gold_parsed = parse(
             sol,
             extraction_mode="first_match",
-            extraction_config=[LatexExtractionConfig()],
+            # extraction_config=[LatexExtractionConfig()],
         )
         if len(gold_parsed) == 0:
             # Skip unparseable examples
