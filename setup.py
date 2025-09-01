@@ -74,6 +74,7 @@ _deps = [
     "async-lru>=2.0.5",
     "aiofiles>=24.1.0",
     "pandas>=2.2.3",
+    "peft>=0.17.1",
 ]
 
 # this is a lookup table with items like:
