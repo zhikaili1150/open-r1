@@ -43,7 +43,7 @@ if stale_egg_info.exists():
 _deps = [
     "accelerate==1.4.0",
     "bitsandbytes>=0.43.0",
-    "datasets>=3.2.0",
+    "datasets==3.6.0",
     "deepspeed==0.16.8",
     "distilabel[vllm,ray,openai]>=1.5.2",
     "e2b-code-interpreter>=1.0.5",
@@ -61,7 +61,7 @@ _deps = [
     "morphcloud==0.1.67",
     "packaging>=23.0",
     "parameterized>=0.9.0",
-    "peft>=0.14.0",
+    "peft>=0.17.1",
     "pytest",
     "python-dotenv",
     "ruff>=0.9.0",
@@ -74,7 +74,6 @@ _deps = [
     "async-lru>=2.0.5",
     "aiofiles>=24.1.0",
     "pandas>=2.2.3",
-    "peft>=0.17.1",
 ]
 
 # this is a lookup table with items like:
