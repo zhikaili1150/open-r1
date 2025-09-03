@@ -3,43 +3,123 @@
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # conda
-source /scratch_dgxl/zl624/miniconda3/etc/profile.d/conda.sh
-conda activate openr1
+# source /scratch_dgxl/zl624/miniconda3/etc/profile.d/conda.sh
+# conda activate openr1
 
-BASE_MODEL="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-LORA_PATH="data/OpenRS-GRPO/210/checkpoint-100"
+# uv
+source openr1/bin/activate
 
-echo "=========================================="
-echo ">>> Evaluating LoRA: $LORA_PATH"
-echo "=========================================="
+BASE_MODEL="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 
-MERGED_PATH="$LORA_PATH/merged_model"
-MERGED_PATH="knoveleng/Open-RS2"
-echo ">>> Merging LoRA into base model with merge_lora_model.py ..."
-# mkdir -p "$MERGED_PATH"
+# =========================
+# Mode selection
+# =========================
+# Mode 1: specify a directory containing LoRA checkpoints
+LORA_DIR=""   # e.g., "data/OpenRS-GRPO/210"
 
-# python scripts/lzk/merge_lora_model.py "$BASE_MODEL" "$LORA_PATH" "$MERGED_PATH"
+# Mode 2: manually specify LoRA checkpoint list
+LORA_LIST=(
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-40"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-80"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-120"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-160"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-200"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-240"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-280"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-320"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-360"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/mix_reward/211/checkpoint-400"
 
-# Base model configuration
-BASE_MODEL_ARGS="model_name=$MERGED_PATH,dtype=bfloat16,max_model_length=32768,gpu_memory_utilization=0.8,generation_parameters={max_new_tokens:32768,temperature:0.6,top_p:0.95}"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-40"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-80"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-120"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-160"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-200"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-240"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-280"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-320"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-360"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/merge_policy/211-110_101_1_1/checkpoint-400"
 
-# Define evaluation tasks
-# TASKS="aime24 math_500 amc23 minerva olympiadbench"
-TASKS="aime24"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-40"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-80"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-120"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-160"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-200"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-240"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-280"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-320"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-360"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/101/checkpoint-400"
 
-output_dir="logs/evals/OpenRS-210"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-40"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-80"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-120"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-160"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-200"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-240"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-280"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-320"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-360"
+    "experiments/exp14_dsqwen7b_openrs/ckpt/dsqwen7b_openrs/110/checkpoint-400"
+)
 
-# Set model args with the specific revision
-model_args="$BASE_MODEL_ARGS"
 
-# Create output directory if it doesn't exist
-mkdir -p "$output_dir"
+# Build final LoRA path list
+if [ -n "$LORA_DIR" ]; then
+    # Find all directories (assume each directory is a LoRA checkpoint)
+    LORA_PATHS=($(find "$LORA_DIR" -mindepth 1 -maxdepth 1 -type d))
+else
+    LORA_PATHS=("${LORA_LIST[@]}")
+fi
 
-# Run evaluations for each task
-for task in $TASKS; do
-    echo "Evaluating task: $task"
-    lighteval vllm "$model_args" "custom|$task|0|0" \
-        --custom-tasks src/open_r1/evaluate.py \
-        --use-chat-template \
-        --output-dir "$output_dir" 
+# =========================
+# Evaluation
+# =========================
+
+# TASKS=("aime24" "math_500" "amc23" "minerva" "olympiadbench")
+# TASKS=("aime24" "math_500" "amc23" "minerva" "olympiadbench")
+TASKS=("aime24" "amc23")
+
+# CSV file
+TIMING_CSV_FILE="results/eval_times.csv"
+echo "model,task,start_time,end_time,duration" > "$TIMING_CSV_FILE"
+
+for LORA_PATH in "${LORA_PATHS[@]}"; do
+    echo "=========================================="
+    echo ">>> Evaluating LoRA: $LORA_PATH"
+    echo "=========================================="
+
+    MERGED_PATH="$LORA_PATH/merged_model"
+    echo ">>> Merging LoRA into base model with merge_lora_model.py ..."
+    mkdir -p "$MERGED_PATH"
+    python scripts/lzk/merge_lora_model.py "$BASE_MODEL" "$LORA_PATH" "$MERGED_PATH"
+
+    # Model configuration
+    MODEL_ARGS="model_name=$MERGED_PATH,dtype=bfloat16,max_model_length=32768,gpu_memory_utilization=0.8,generation_parameters={max_new_tokens:32768,temperature:0.6,top_p:0.95}"
+
+
+    for task in "${TASKS[@]}"; do
+        start_time=$(date +"%Y-%m-%d %H:%M:%S")
+        start_sec=$(date +%s)
+
+        # Run evaluations for each task
+        echo "Evaluating task: $task"
+
+        output_dir="results/$task"
+        mkdir -p "$output_dir"
+
+        lighteval vllm "$MODEL_ARGS" "custom|$task|0|0" \
+            --custom-tasks src/open_r1/evaluate.py \
+            --use-chat-template \
+            --output-dir "$output_dir"
+
+        end_time=$(date +"%Y-%m-%d %H:%M:%S")
+        end_sec=$(date +%s)
+        duration=$((end_sec - start_sec))
+
+        echo "$LORA_PATH,$task,$start_time,$end_time,$duration" >> "$TIMING_CSV_FILE"
+    done
+
+    rm -rf $MERGED_PATH
 done
