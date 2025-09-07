@@ -10,6 +10,7 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn
 source openr1/bin/activate
 
 BASE_MODEL="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
+EXP_NAME="exp14_dsqwen7b_openrs"
 
 # =========================
 # Mode selection
@@ -82,7 +83,9 @@ fi
 TASKS=("aime24" "amc23")
 
 # CSV file
-TIMING_CSV_FILE="results/eval_times.csv"
+RESULTS_DIR="results/$EXP_NAME"
+mkdir -p "$RESULTS_DIR"
+TIMING_CSV_FILE="$RESULTS_DIR/eval_times.csv"
 echo "model,task,start_time,end_time,duration" > "$TIMING_CSV_FILE"
 
 for LORA_PATH in "${LORA_PATHS[@]}"; do
@@ -106,7 +109,7 @@ for LORA_PATH in "${LORA_PATHS[@]}"; do
         # Run evaluations for each task
         echo "Evaluating task: $task"
 
-        output_dir="results/$task"
+        output_dir="$RESULTS_DIR/$task"
         mkdir -p "$output_dir"
 
         lighteval vllm "$MODEL_ARGS" "custom|$task|0|0" \
