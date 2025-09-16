@@ -18,10 +18,20 @@ def main():
     lora_dirs = pair_args[::2]
     weights = list(map(float, pair_args[1::2]))
 
-    assert len(lora_dirs) == len(weights), "目录数与权重数不匹配"
-    assert len(lora_dirs) >= 2, "请至少提供两个 LoRA 模型"
+    # 过滤掉权重为 0 的 lora
+    filtered = [(d, w) for d, w in zip(lora_dirs, weights) if w > 0]
+    if not filtered:
+        print("❌ 所有权重均为 0，无法合并")
+        sys.exit(1)
 
-    print(f"📦 开始合并 {len(lora_dirs)} 个 LoRA 模型")
+    # 拆分过滤后的路径和权重
+    lora_dirs, weights = zip(*filtered)
+    lora_dirs, weights = list(lora_dirs), list(weights)
+
+    assert len(lora_dirs) == len(weights), "目录数与权重数不匹配"
+    assert len(lora_dirs) >= 1, "请至少提供一个有效的 LoRA 模型"
+
+    print(f"📦 开始合并 {len(lora_dirs)} 个 LoRA 模型 (已自动忽略 weight=0 的模型)")
     print("🔢 权重列表:", weights)
 
     # 加载每个 LoRA 的 adapter_model.safetensors
@@ -67,6 +77,7 @@ def main():
             print(f"📁 拷贝辅助文件: {fname}")
 
     print(f"🎉 所有内容已保存在: {output_dir}")
+
 
 if __name__ == "__main__":
     main()
