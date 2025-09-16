@@ -12,6 +12,60 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+########################################################################################
+# Add custom metrics
+########################################################################################
+from aenum import extend_enum
+from lighteval.metrics.metrics import Metrics, MetricCategory, MetricUseCase
+from lighteval.models.model_output import ModelResponse
+from lighteval.metrics.utils.metric_utils import CorpusLevelMetric
+from lighteval.tasks.requests import Doc
+import numpy as np
+from transformers import AutoTokenizer
+
+
+def calc_length(predictions: list[str], formatted_doc: Doc, **kwargs):
+    response = predictions[0]
+    return len(response)
+
+
+def calc_token_length(predictions: list[str], formatted_doc: Doc, **kwargs):
+    response = predictions[0]
+    tokenizer = AutoTokenizer.from_pretrained(
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+    )
+    tokens = tokenizer.encode(response)
+    return len(tokens)
+
+
+mean_response_length = CorpusLevelMetric(
+    metric_name="mean_response_length",
+    higher_is_better=True,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.NONE,
+    sample_level_fn=calc_length,
+    corpus_level_fn=np.mean,
+)
+
+mean_token_length = CorpusLevelMetric(
+    metric_name="mean_token_length",
+    higher_is_better=True,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.NONE,
+    sample_level_fn=calc_token_length,
+    corpus_level_fn=np.mean,
+)
+
+# Adds the metric to the metric list!
+extend_enum(Metrics, "MEAN_RESPONSE_LENGTH", mean_response_length)
+extend_enum(Metrics, "MEAN_TOKEN_LENGTH", mean_token_length)
+
+
+########################################################################################
+# Custom evaluation tasks for LightEval.
+########################################################################################
+
 """Custom evaluation tasks for LightEval."""
 
 import random
@@ -55,7 +109,10 @@ latex_gold_metric = multilingual_extractive_match_metric(
     precision=5,
     gold_extraction_target=(LatexExtractionConfig(),),
     # Match boxed first before trying other regexes
-    pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+    pred_extraction_target=(
+        ExprExtractionConfig(),
+        LatexExtractionConfig(boxed_match_priority=0),
+    ),
     aggregation_function=max,
 )
 
@@ -65,14 +122,21 @@ expr_gold_metric = multilingual_extractive_match_metric(
     precision=5,
     gold_extraction_target=(ExprExtractionConfig(),),
     # Match boxed first before trying other regexes
-    pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+    pred_extraction_target=(
+        ExprExtractionConfig(),
+        LatexExtractionConfig(boxed_match_priority=0),
+    ),
     aggregation_function=max,
 )
 
 gpqa_metric = multilingual_extractive_match_metric(
     language=Language.ENGLISH,
-    gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-    pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+    gold_extraction_target=[
+        IndicesExtractionConfig(prefix_for_extraction="NativeLetters")
+    ],
+    pred_extraction_target=[
+        IndicesExtractionConfig(prefix_for_extraction="NativeLetters")
+    ],
     precision=5,
 )
 
@@ -124,10 +188,18 @@ def olympiadbench_prompt_fn(line, task_name: str = None):
 
 def gpqa_prompt_fn(line, task_name: str = None):
     gold_index = random.randint(0, 3)
-    choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
+    choices = [
+        line["Incorrect Answer 1"],
+        line["Incorrect Answer 2"],
+        line["Incorrect Answer 3"],
+    ]
     choices.insert(gold_index, line["Correct Answer"])
     query = GPQA_QUERY_TEMPLATE.format(
-        A=choices[0], B=choices[1], C=choices[2], D=choices[3], Question=line["Question"]
+        A=choices[0],
+        B=choices[1],
+        C=choices[2],
+        D=choices[3],
+        Question=line["Question"],
     )
     return Doc(
         task_name=task_name,
@@ -150,7 +222,7 @@ aime24 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[expr_gold_metric],
+    metric=[expr_gold_metric, mean_token_length],
     version=1,
 )
 aime25 = LightevalTaskConfig(
@@ -164,7 +236,7 @@ aime25 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[expr_gold_metric],
+    metric=[expr_gold_metric, mean_token_length],
     version=1,
 )
 math_500 = LightevalTaskConfig(
@@ -178,7 +250,7 @@ math_500 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[latex_gold_metric],
+    metric=[latex_gold_metric, mean_token_length],
     version=1,
 )
 gpqa_diamond = LightevalTaskConfig(
@@ -192,7 +264,7 @@ gpqa_diamond = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,  # needed for reasoning models like R1
-    metric=[gpqa_metric],
+    metric=[gpqa_metric, mean_token_length],
     stop_sequence=[],  # no stop sequence, will use eos token
     trust_dataset=True,
     version=1,
@@ -208,7 +280,7 @@ minerva = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[latex_gold_metric],
+    metric=[latex_gold_metric, mean_token_length],
     version=1,
 )
 amc23 = LightevalTaskConfig(
@@ -222,7 +294,7 @@ amc23 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[expr_gold_metric],
+    metric=[expr_gold_metric, mean_token_length],
     version=1,
 )
 olympiadbench = LightevalTaskConfig(
@@ -236,7 +308,7 @@ olympiadbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[latex_gold_metric],
+    metric=[latex_gold_metric, mean_token_length],
     version=1,
 )
 
