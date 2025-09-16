@@ -59,7 +59,7 @@ def main(script_args, training_args, model_args):
     # )
 
     # Save the model with the reward info v2
-    reward_order = ["accuracy", "format", "length"]
+    reward_order = ["accuracy", "format", "length", "cosine"]
     reward_dict = dict(zip(script_args.reward_funcs, training_args.reward_weights))
     reward_info = "".join(str(int(reward_dict.get(name, 0))) for name in reward_order)
 
@@ -68,6 +68,7 @@ def main(script_args, training_args, model_args):
     formatted_datetime = current_time.strftime("%Y_%m_%d_%H_%M_%S")
     # training_args.run_name = f"{model_args.model_name_or_path}_{script_args.dataset_name}_{reward_info}_{training_args.learning_rate}_{formatted_datetime}"
     training_args.run_name = f"{reward_info}"
+    # training_args.run_name = f"{training_args.learning_rate}"
     training_args.output_dir = os.path.join(
         training_args.output_dir, f"{training_args.run_name}"
     )
