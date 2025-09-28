@@ -56,4 +56,4 @@ save_steps: 50
 seed: 42
 temperature: 0.7
 warmup_ratio: 0.1
-wandb_project: GRPO_FFT_2ACC1FMT
+wandb_project: GRPO_FFT_MixReward_2ACC1FMT
