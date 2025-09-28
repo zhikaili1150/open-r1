@@ -1,42 +1,31 @@
 #!/bin/bash
 
-#SBATCH --job-name=exp3
-#SBATCH --partition=dgxl_irp
-#SBATCH --qos=dgxl_irp_high
+#SBATCH --job-name=exp_drgrpo
+#SBATCH --output=logs/%j_exp_drgrpo_training.out
+#SBATCH --error=logs/%j_exp_drgrpo_training.err
+#SBATCH --partition=h100
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=32GB
 
-#SBATCH -e logs/%j-exp3.err              # File to redirect stderr
-#SBATCH -o logs/%j-exp3.out              # File to redirect stdout
-#SBATCH --mem=10GB                   # Memory per processor
-#SBATCH --time=24:00:00              # The walltime
-#SBATCH --nodes=1                    # Run all processes on a single node
-#SBATCH --ntasks-per-node=1          # number of MP tasks
-#SBATCH --cpus-per-task=12           # CPUs per task
-#SBATCH --gres=gpu:1                 # Number of GPUs
-
-# source env.sh
+# uv
+source openr1/bin/activate
 
 # conda
-source /scratch_dgxl/zl624/miniconda3/etc/profile.d/conda.sh
-conda activate openr1
+# conda activate openr1
 
 
 START_TIME=$(date +%s)
 echo "START TIME: $(date)"
 
 # Mode 1: specify directory, automatically collect yaml files
-# CONFIG_DIR="experiments/03_dsqwen1b_openrs/config"
-# CONFIG_FILES=($(find "$CONFIG_PARENT" -mindepth 1 -maxdepth 1 -type f -name "*.yaml"))
+CONFIG_DIR=""
+CONFIG_FILES=($(find "$CONFIG_DIR" -mindepth 1 -maxdepth 1 -type f -name "*.yaml"))
 
-
-# Mode 2: manually specify yaml file list
+# Mode 2: manually specify config files
 CONFIG_FILES=(
-"experiments/03_dsqwen1b_openrs/config/config_reward_411.yaml"
-"experiments/03_dsqwen1b_openrs/config/config_reward_412.yaml"
-"experiments/03_dsqwen1b_openrs/config/config_reward_421.yaml"
-"experiments/03_dsqwen1b_openrs/config/config_reward_413.yaml"
-"experiments/03_dsqwen1b_openrs/config/config_reward_431.yaml"
 )
-
 
 for CONFIG_FILE in "${CONFIG_FILES[@]}"; do
     echo "🚀 Launching with config: $CONFIG_FILE"

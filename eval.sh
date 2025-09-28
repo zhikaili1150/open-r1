@@ -25,11 +25,7 @@ mkdir -p "$RESULTS_DIR"
 # =========================
 # Mode selection
 # =========================
-# Mode 1: manually specify CKPT checkpoints
-CKPT_LIST=(
-)
-
-# Mode 2: specify a directory containing checkpoints
+# Mode 1: specify a directory containing checkpoints
 CKPT_DIR_LIST=(
     )
 CKPT_LIST=()
@@ -38,6 +34,10 @@ for dir in "${CKPT_DIR_LIST[@]}"; do
         [ -d "$sub" ] && CKPT_LIST+=("${sub%/}")  
     done
 done
+
+# Mode 2: manually specify CKPT checkpoints
+CKPT_LIST=(
+)
 
 # =========================
 # Evaluation
@@ -68,7 +68,7 @@ for CKPT in "${CKPT_LIST[@]}"; do
         echo ">>> Evaluating LoRA: $CKPT"
         echo "=========================================="
         MODEL="$CKPT/merged_model"
-        
+
         echo ">>> Merging LoRA into base model with merge_lora_model.py ..."
         mkdir -p "$MODEL"
         python scripts/lzk/merge_lora_model.py "$BASE_MODEL" "$CKPT" "$MODEL"
