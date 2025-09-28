@@ -1,9 +1,17 @@
 import os
 import json
 import pandas as pd
-import re
 import argparse
 import numpy as np
+
+def find_json_files(path):
+    """递归查找 path 下的所有 .json 文件"""
+    json_files = []
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            if f.endswith(".json"):
+                json_files.append(os.path.join(root, f))
+    return json_files
 
 def main():
     parser = argparse.ArgumentParser(description="汇总任务结果 JSON -> CSV")
@@ -31,13 +39,24 @@ def main():
             if not os.path.isdir(model_path):
                 continue
 
-            for fname in os.listdir(model_path):
-                if not fname.endswith(".json"):
-                    continue
+            # 查找该 model_path 下所有 json 文件（支持子文件夹）
+            json_files = find_json_files(model_path)
+            if not json_files:
+                continue
 
-                fpath = os.path.join(model_path, fname)
+            for fpath in json_files:
                 with open(fpath, "r") as f:
                     data = json.load(f)
+
+                # 确定 model 名称：相对于 task_dir 的相对路径
+                rel_path = os.path.relpath(fpath, task_dir)
+                parts = rel_path.split(os.sep)
+                if len(parts) >= 2:
+                    # model_dir/subfolder
+                    model = os.path.join(parts[0], parts[1])
+                else:
+                    # 只有 model_dir
+                    model = parts[0]
 
                 for metric in args.metrics:
                     try:
@@ -45,13 +64,6 @@ def main():
                     except KeyError:
                         print(f"⚠️ 跳过 {fpath}, 没有 {task}/{metric}")
                         continue
-
-                    # 用正则提取 model 名称，例如 merge_policy_v2_201
-                    m = re.search(r"(merge_policy_v\d+_\d+)", model_dir)
-                    if m:
-                        model = m.group(1)
-                    else:
-                        model = model_dir  # fallback
 
                     if model not in records:
                         records[model] = {}
