@@ -67,8 +67,9 @@ def main(script_args, training_args, model_args):
     current_time = datetime.now()
     formatted_datetime = current_time.strftime("%Y_%m_%d_%H_%M_%S")
     # training_args.run_name = f"{model_args.model_name_or_path}_{script_args.dataset_name}_{reward_info}_{training_args.learning_rate}_{formatted_datetime}"
-    training_args.run_name = f"{reward_info}"
+    # training_args.run_name = f"{reward_info}"
     # training_args.run_name = f"{training_args.learning_rate}"
+    training_args.run_name = f"{reward_info}_{training_args.learning_rate}"
     training_args.output_dir = os.path.join(
         training_args.output_dir, f"{training_args.run_name}"
     )
@@ -195,8 +196,8 @@ def main(script_args, training_args, model_args):
         checkpoint = training_args.resume_from_checkpoint
     elif last_checkpoint is not None:
         checkpoint = last_checkpoint
-    train_result = trainer.train(resume_from_checkpoint=checkpoint)
-    # train_result = trainer.train()
+    # train_result = trainer.train(resume_from_checkpoint=checkpoint)
+    train_result = trainer.train()
     metrics = train_result.metrics
     metrics["train_samples"] = len(dataset[script_args.dataset_train_split])
     trainer.log_metrics("train", metrics)
