@@ -1,12 +1,8 @@
 # 1 Installation
 
-  
-
 To run the code in this project, first, create a Python virtual environment using e.g. `uv`.
 
 To install `uv`, follow the [UV Installation Guide](https://docs.astral.sh/uv/getting-started/installation/).
-
-  
 
 ```shell
 
@@ -14,16 +10,10 @@ uv venv openr1 --python 3.11 && source openr1/bin/activate && uv pip install --u
 
 ```
 
-  
-
 > [!TIP]
 > For Hugging Face cluster users, add `export UV_LINK_MODE=copy` to your `.bashrc` to suppress cache warnings from `uv`
 
-  
-
 Next, install vLLM and FlashAttention:
-
-  
 
 ```shell
 
@@ -35,11 +25,7 @@ uv pip install -e .
 
 ```
 
-  
-
 Next, log into your Hugging Face and Weights and Biases accounts as follows:
-
-  
 
 ```shell
 
@@ -49,11 +35,7 @@ wandb login
 
 ```
 
-  
-
 Finally, check whether your system has Git LFS installed so that you can load and push models/datasets to the Hugging Face Hub:
-
-  
 
 ```shell
 
@@ -61,11 +43,7 @@ git-lfs --version
 
 ```
 
-  
-
 If it isn't installed, run:
-
-  
 
 ```shell
 
@@ -77,36 +55,23 @@ sudo apt-get install git-lfs
 
 # 2 Training models
 
-  
-
 We provide a training script `train.sh` to simplify the process.
-
-  
 
 ## 2.1 Modify training script
 
-  
-
 You can launch training based on config files in two ways:
-
-  
 
 1. **Folder Mode**
 
 Specify a folder, and all `.yaml` files inside will be automatically discovered.
 
-  
-
 2. **File Mode**
 
 Directly specify one or more `.yaml` files.
 
-  
-
 > [!TIP]
 > Please choose **only one** of the above methods.
 > Comment out the code for the other method.
-
 
 ```bash
 # Mode 1: specify directory, automatically collect yaml files
@@ -120,8 +85,7 @@ CONFIG_FILES=($(find "$CONFIG_DIR" -mindepth 1 -maxdepth 1 -type f -name "*.yaml
 # )
 ```
 
-
-## 2.2 
+## 2.2
 
 Edit `recipes/accelerate_configs/zero2.yaml` or `recipes/accelerate_configs/zero3.yaml` to adapt to your system.
 
@@ -134,7 +98,6 @@ Edit `recipes/accelerate_configs/zero2.yaml` or `recipes/accelerate_configs/zero
 ```
 
 ## 2.3 Execute the script
-
 
 ```bash
 bash train.sh
@@ -163,17 +126,16 @@ Checkpoints can be either **LoRA** or **FFT models**, depending on whether the f
 There are two ways to specify checkpoints (inside the checkpoint directory):
 
 1. **Directory List Mode**  
-	Specify a list of directories, each containing multiple checkpoints at different training step. This is suitable for evaluating all training steps of multiple models.
-    
+ Specify a list of directories, each containing multiple checkpoints at different training step. This is suitable for evaluating all training steps of multiple models.
+
 2. **Manual Checkpoint List Mode**  
     Specify a list of checkpoints directly. This is suitable for evaluating specific training steps.
-    
 
 ```bash
 # Mode 1: specify a directory containing checkpoints
 CKPT_DIR_LIST=(
-	experiments/exp_fft/ckpt/mix_reward/1e-06
-	experiments/exp_fft/ckpt/mix_reward/1e-07
+ experiments/exp_fft/ckpt/mix_reward/1e-06
+ experiments/exp_fft/ckpt/mix_reward/1e-07
 )
 
 CKPT_LIST=()
@@ -186,15 +148,14 @@ done
 
 # Mode 2: manually specify CKPT checkpoints
 # CKPT_LIST=(
-# 	experiments/exp_fft/ckpt/mix_reward/1e-06/checkpoint-50
-#  	experiments/exp_fft/ckpt/mix_reward/1e-07/checkpoint-50
+#  experiments/exp_fft/ckpt/mix_reward/1e-06/checkpoint-50
+#   experiments/exp_fft/ckpt/mix_reward/1e-07/checkpoint-50
 #)
 ```
 
 > [!TIP]
 > Please choose **only one** of the above methods.
 > Comment out the code for the other method.
-
 
 ## 3.3 Specify Tasks
 
