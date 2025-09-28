@@ -31,17 +31,7 @@ uv pip install vllm==0.8.5.post1
 
 uv pip install setuptools && uv pip install flash-attn==2.7.4.post1 --no-build-isolation
 
-```
-
-  
-
-This will also install PyTorch `v2.6.0` and it is **very important** to use this version since the vLLM binaries are compiled for it. You can then install the remaining dependencies for your specific use case via `pip install -e .[LIST OF MODES]`. For most contributors, we recommend:
-
-  
-
-```shell
-
-GIT_LFS_SKIP_SMUDGE=1 uv pip install -e ".[dev]"
+uv pip install -e .
 
 ```
 
