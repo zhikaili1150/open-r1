@@ -83,7 +83,7 @@ sudo apt-get install git-lfs
 
 ```
 
-  
+<br>
 
 # 2 Training models
 
@@ -117,33 +117,33 @@ Directly specify one or more `.yaml` files.
 > Please choose **only one** of the above methods.
 > Comment out the code for the other method.
 
-  
 
 ```bash
-
 # Mode 1: specify directory, automatically collect yaml files
-
 CONFIG_DIR="experiments/exp_fft/config/mix_reward/2acc1fmt"
-
 CONFIG_FILES=($(find "$CONFIG_DIR" -mindepth 1 -maxdepth 1 -type f -name "*.yaml"))
 
-  
-
 # Mode 2: manually specify config files
-
 # CONFIG_FILES=(
-
-# experiments/exp_fft/config/mix_reward/2acc1fmt/config_lr_1e-05.yaml
-
-# experiments/exp_fft/config/mix_reward/2acc1fmt/config_lr_1e-06.yaml
-
+#   experiments/exp_fft/config/mix_reward/2acc1fmt/config_lr_1e-05.yaml
+#   experiments/exp_fft/config/mix_reward/2acc1fmt/config_lr_1e-06.yaml
 # )
-
 ```
 
-  
 
-## 2.2 Execute the script
+## 2.2 
+
+Edit `recipes/accelerate_configs/zero2.yaml` or `recipes/accelerate_configs/zero3.yaml` to adapt to your system.
+
+```shell
+    accelerate launch \
+        --config_file recipes/accelerate_configs/zero2.yaml \
+        src/open_r1/grpo.py \
+        --config "$CONFIG_FILE" \
+        --vllm_mode colocate
+```
+
+## 2.3 Execute the script
 
 
 ```bash
@@ -151,6 +151,8 @@ bash train.sh
 ```
 
 The model will be saved in the path specificed by `output_dir` in `.yaml` config.
+
+<br>
 
 # 3 Evaluate Models
 
