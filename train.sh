@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --job-name=exp_drgrpo
-#SBATCH --output=logs/%j_exp_drgrpo_training.out
-#SBATCH --error=logs/%j_exp_drgrpo_training.err
+#SBATCH --job-name=exp_fft
+#SBATCH --output=logs/%j_exp_fft_training.out
+#SBATCH --error=logs/%j_exp_fft_training.err
 #SBATCH --partition=h100
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
@@ -20,12 +20,12 @@ START_TIME=$(date +%s)
 echo "START TIME: $(date)"
 
 # Mode 1: specify directory, automatically collect yaml files
-CONFIG_DIR=""
+CONFIG_DIR="experiments/exp_fft/config/mix_reward/2acc1fmt"
 CONFIG_FILES=($(find "$CONFIG_DIR" -mindepth 1 -maxdepth 1 -type f -name "*.yaml"))
 
 # Mode 2: manually specify config files
-CONFIG_FILES=(
-)
+# CONFIG_FILES=(
+# )
 
 for CONFIG_FILE in "${CONFIG_FILES[@]}"; do
     echo "🚀 Launching with config: $CONFIG_FILE"

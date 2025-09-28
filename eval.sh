@@ -18,7 +18,6 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn
 # uv
 source openr1/bin/activate
 
-BASE_MODEL="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 RESULTS_DIR="/local/scratch/zli2255/workspace/open-r1/experiments/exp_fft/results/step0"
 mkdir -p "$RESULTS_DIR"
 
@@ -71,7 +70,7 @@ for CKPT in "${CKPT_LIST[@]}"; do
 
         echo ">>> Merging LoRA into base model with merge_lora_model.py ..."
         mkdir -p "$MODEL"
-        python scripts/lzk/merge_lora_model.py "$BASE_MODEL" "$CKPT" "$MODEL"
+        python scripts/lzk/merge_lora_model.py "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" "$CKPT" "$MODEL"
     fi
 
     # if "model.safetensors" exists, then evaluate FFT models
@@ -113,3 +112,8 @@ for CKPT in "${CKPT_LIST[@]}"; do
         rm -rf $MODEL
     fi
 done
+
+python scripts/lzk/collect_result.py \
+    --root_dir $RESULTS_DIR \
+    --metrics extractive_match mean_token_length \
+    --output result.csv
