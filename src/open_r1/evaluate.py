@@ -155,6 +155,7 @@ def aime_prompt_fn(line, task_name: str = None):
         task_name=task_name,
         query=MATH_QUERY_TEMPLATE.format(Question=line["problem"]),
         choices=[line["answer"]],
+        original_query=line["id"],
         gold_index=0,
     )
 
@@ -207,6 +208,14 @@ def gpqa_prompt_fn(line, task_name: str = None):
         choices=["A", "B", "C", "D"],
         gold_index=gold_index,
         instruction=query,
+    )
+
+def math_validation_prompt_fn(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=MATH_QUERY_TEMPLATE.format(Question=line["problem"]),
+        choices=[line["answer"]],
+        gold_index=0,
     )
 
 
@@ -311,6 +320,20 @@ olympiadbench = LightevalTaskConfig(
     metric=[latex_gold_metric, mean_token_length],
     version=1,
 )
+math_validation = LightevalTaskConfig(
+    name="math_validation",
+    suite=["custom"],
+    prompt_function=math_validation_prompt_fn,
+    hf_repo="Zachary1150/math_validation",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=32768,
+    metric=[latex_gold_metric, mean_token_length],
+    version=1,
+)
 
 # Add tasks to the table
 TASKS_TABLE = []
@@ -321,6 +344,7 @@ TASKS_TABLE.append(gpqa_diamond)
 TASKS_TABLE.append(minerva)
 TASKS_TABLE.append(amc23)
 TASKS_TABLE.append(olympiadbench)
+TASKS_TABLE.append(math_validation)
 
 # MODULE LOGIC
 if __name__ == "__main__":
